@@ -31,6 +31,7 @@ int main()
     dumpRegisterState(reg);
     dumpMemoryState(myMem);
 
+
     delete myMem;
     return 0;
 }

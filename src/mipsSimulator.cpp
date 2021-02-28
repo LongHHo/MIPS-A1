@@ -9,6 +9,36 @@ using namespace std;
 const uint32_t NUMREGS = 32;
 const uint32_t INSTR_SIZE = 4;
 
+
+
+char getType(uint32_t instruction) {
+
+
+    if (instruction == 0xfeedfeed) {
+        return 'H';
+    }
+    
+    uint32_t opcode = instruction >> 25;
+
+    switch(opcode) {
+        case 0:
+            return 'R';
+            break;
+        case 2:
+            return 'J';
+            break;
+        case 3:
+            return 'J';
+            break;
+        default:
+            return 'I';
+            break;
+    }
+
+}
+
+
+
 int main(int argc, char** argv) {   
 
     cout << "helllooo";
@@ -59,10 +89,8 @@ int main(int argc, char** argv) {
 
 
         // put data in memory
-        for (int i = 0; i < length; i ++) {
-            
+        for (int i = 0; i < length; i ++) {            
             myMem->setMemValue(i, *(buffer + i), BYTE_SIZE);
-
         }
 
 
@@ -75,12 +103,26 @@ int main(int argc, char** argv) {
     }
 
 
-    uint32_t value = 0;
-    myMem->getMemValue(0x00, value, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x00 is now 0x" << hex << setfill('0') << setw(8) << value << endl;
+    uint32_t index = 0;
 
 
 
+    uint32_t instruction = 0;
+    while (true) {
+
+        // get instruction 
+        myMem->getMemValue(index, instruction, WORD_SIZE);
+
+        char code = getType(instruction);
+
+        cout << instruction << '\n';
+        
+        if (code == 'H') {
+            break;
+        }
+
+        index += 4;
+    }
 
 
     return 0;
