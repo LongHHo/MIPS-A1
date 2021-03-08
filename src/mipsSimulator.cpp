@@ -4,6 +4,7 @@
 #include "RegisterInfo.h"
 #include "EndianHelpers.h"
 #include <fstream>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -11,13 +12,29 @@ const uint32_t NUMREGS = 32;
 const uint32_t INSTR_SIZE = 4;
 
 enum INSTR_TYPE
-{   Halt, 
+{  
+    Halt, 
     Pad,
     R,
     I,
     J
 };
 
+// make own function later, from stack overflow
+uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
+{
+
+  if (a > b) throw("Oh no");
+  uint32_t r = 0;
+
+  for(uint8_t i=a; i<=b;i++)
+    {
+      r |= 1 << i;
+    }
+
+  return instruction & r;
+
+}
 
 
 INSTR_TYPE getType(uint32_t instruction) {
@@ -99,6 +116,10 @@ int main(int argc, char** argv) {
 
 
     MemoryStore *myMem = createMemoryStore();
+    if(argv[1] == NULL){ 
+      cout << "No argument provided" << endl;
+      exit(127);
+    }
     string fileName = argv[1];
 
 
@@ -108,27 +129,11 @@ int main(int argc, char** argv) {
 
 
 
-    ifstream myFile(fileName, ios::in | ios::binary);
+    ifstream myFile(fileName.c_str(), ios::in | ios::binary);
 
     
     
     if (myFile.is_open()) {
-
-        // set pointer to beginning of file
-        // myFile.seekg(0);
-        // uint32_t currInstr = 0;
-        // uint32_t currAddress = 0;
-        // // read files into memory
-        // while (!myFile.eof()) {
-        //     myFile.read(reinterpret_cast<char*>(&currInstr), INSTR_SIZE);
-
-        //     myMem->setMemValue(currAddress, currInstr, WORD_SIZE);
-
-        //     // move pointer in file
-        //     myFile.seekg(INSTR_SIZE, ios::cur);
-        //     // increment address in myMem
-        //     currAddress += INSTR_SIZE;
-        // }
 
         // get length of file:
         myFile.seekg (0, myFile.end);
@@ -164,25 +169,15 @@ int main(int argc, char** argv) {
 
     uint32_t instruction;
 
-    // for (uint32_t i = 0; i < 8; i++) {
-
-    //     // get instruction 
-    //     myMem->getMemValue(i*INSTR_SIZE, instruction, WORD_SIZE);
-    //     cout << "The 32-bit (word) value of address is now 0x" << hex << setfill('0') << setw(8) << instruction << endl;
-
-    //     char code = getType(instruction);
-    
-    // }
-
     uint32_t val = 0;
     myMem->getMemValue(0x08, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x10 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
+    cout << "The 32-bit (word) value of address 0x08 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
     myMem->getMemValue(0x0c, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x10 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
+    cout << "The 32-bit (word) value of address 0x0c is now 0x" << hex << setfill('0') << setw(8) << val << endl;
     myMem->getMemValue(0x10, val, WORD_SIZE);
     cout << "The 32-bit (word) value of address 0x10 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
     myMem->getMemValue(0x14, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x10 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
+    cout << "The 32-bit (word) value of address 0x14 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
 
 
 
@@ -190,8 +185,7 @@ int main(int argc, char** argv) {
         
         myMem->getMemValue(pc, instruction, WORD_SIZE);
         char code = getType(instruction);
-
-     
+	uint32_t jAddress = createMask(0,26, instruction);
 
         switch (code) {
             case Halt:
@@ -212,13 +206,14 @@ int main(int argc, char** argv) {
                 break;
             case J:
                 cout << "J" << endl;
-                 if ((instruction >> 26) == 3) {
-                    // double check this
+		if (createMask(26,31,instruction) == 3) {
+		    cout << "Jump and link" << endl;
                     regs[31] = pc + 8;
                 }
-
-                // not functional
-                pc = (instruction % (2^26))*4;
+		jAddress = jAddress << 2;
+		// implement four bits from PC later
+		pc = jAddress;
+          
                 break;
             case I:
                 cout << "I" << endl;
@@ -227,8 +222,6 @@ int main(int argc, char** argv) {
             default:
                 fprintf(stderr,"Illegal operation..."); 
                 exit(127);
-            
-
         }
         
 
