@@ -196,16 +196,17 @@ int main(int argc, char** argv) {
                 pc += INSTR_SIZE;
                 break;
             case J:
+	      {
                 cout << "J" << endl;
 		if (createMask(26,31,instruction) == 3) {
 		    cout << "Jump and link" << endl;
                     regs[31] = pc + 8;
                 }
 		jAddress = jAddress << 2;
-		// implement four bits from PC later
-		pc = jAddress;
-          
+		uint32_t pcAddr = instruction & ~0xFFFFFFF;
+		pc = pcAddr | jAddress;
                 break;
+	      }
             case I:
                 cout << "I" << endl;
                 pc += INSTR_SIZE;
