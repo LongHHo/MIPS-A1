@@ -21,16 +21,15 @@ enum INSTR_TYPE
 };
 
 // make own function later, from stack overflow
+// inclusive from a to b
 uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 {
 
   if (a > b) throw("Oh no");
+  
   uint32_t r = 0;
 
-  for(uint8_t i=a; i<=b;i++)
-    {
-      r |= 1 << i;
-    }
+  r = ((1 << (b + 1)) - 1) << a;
 
   return instruction & r;
 
