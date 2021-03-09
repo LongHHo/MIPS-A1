@@ -29,9 +29,18 @@ uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
   
   uint32_t r = 0;
 
-  r = ((1 << (b + 1)) - 1) << a;
+  uint32_t aMask = ((1 << a) - 1);
+  uint32_t bMask = ((1 << b + 1) - 1);
 
-  return (instruction & r);
+  if (b == 31) {
+    bMask = 0xFFFFFFFF;
+  }
+
+
+  r = bMask ^ aMask;
+
+
+  return (instruction & r) >> a;
 
 }
 
@@ -119,10 +128,10 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
     switch(funct){
         case 0x20:
 	  {
-	  uint32_t rs = createMask(11, 15, instruction);
+	  uint32_t rd = createMask(11, 15, instruction);
 	  uint32_t rt = createMask(16, 20, instruction);
-	  uint32_t rd = createMask(21, 25, instruction);
-	  cout << rs << endl;
+	  uint32_t rs = createMask(21, 25, instruction);
+	  cout << rt << endl;
 
 	  int op1 = regs[rs];
 	  int op2 = regs[rt];
@@ -195,6 +204,10 @@ int main(int argc, char** argv) {
 
     // test contents of memory
     uint32_t val = 0;
+    myMem->getMemValue(0x00, val, WORD_SIZE);
+    cout << "The 32-bit (word) value of address 0x00 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
+    myMem->getMemValue(0x04, val, WORD_SIZE);
+    cout << "The 32-bit (word) value of address 0x04 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
     myMem->getMemValue(0x08, val, WORD_SIZE);
     cout << "The 32-bit (word) value of address 0x08 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
     myMem->getMemValue(0x0c, val, WORD_SIZE);
@@ -223,22 +236,21 @@ int main(int argc, char** argv) {
             case Pad:
                 cout << "Pad" << endl;
                 pc += INSTR_SIZE;
-                return 0;
                 break;
             case R:
                 cout << "R" << endl;
-		rHelper(instruction, &pc, regs);
+		        rHelper(instruction, &pc, regs);
                 break;
             case J:
 	      {
                 cout << "J" << endl;
-		if (createMask(26,31,instruction) == 3) {
-		    cout << "Jump and link" << endl;
-                    regs[31] = pc + 8;
-                }
-		jAddress = jAddress << 2;
-		uint32_t pcAddr = pc & ~0xFFFFFFF;
-		pc = pcAddr | jAddress;
+                if (createMask(26,31,instruction) == 3) {
+                    cout << "Jump and link" << endl;
+                            regs[31] = pc + 8;
+                        }
+                jAddress = jAddress << 2;
+                uint32_t pcAddr = pc & ~0xFFFFFFF;
+                pc = pcAddr | jAddress;
                 break;
 	      }
             case I:
