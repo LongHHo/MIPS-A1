@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
                     regs[31] = pc + 8;
                 }
 		jAddress = jAddress << 2;
-		uint32_t pcAddr = instruction & ~0xFFFFFFF;
+		uint32_t pcAddr = pc & ~0xFFFFFFF;
 		pc = pcAddr | jAddress;
                 break;
 	      }
