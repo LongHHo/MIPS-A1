@@ -31,7 +31,7 @@ uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 
   r = ((1 << (b + 1)) - 1) << a;
 
-  return instruction & r;
+  return (instruction & r);
 
 }
 
@@ -107,6 +107,39 @@ void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
 }
 
+void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
+
+
+    // get funct code
+  uint32_t funct = createMask(0, 5, instruction);
+
+  cout << funct << " is the funct code" << endl;
+
+
+    switch(funct){
+        case 0x20:
+	  {
+	  uint32_t rs = createMask(11, 15, instruction);
+	  uint32_t rt = createMask(16, 20, instruction);
+	  uint32_t rd = createMask(21, 25, instruction);
+	  cout << rs << endl;
+
+	  int op1 = regs[rs];
+	  int op2 = regs[rt];
+	  
+	  regs[rd] = op1 + op2;
+	 
+	  *pc = *pc + 4;
+	  break;
+	  }
+        default:
+	  exit(127);
+    }
+
+}
+
+
+
 
 int main(int argc, char** argv) {   
 
@@ -120,6 +153,7 @@ int main(int argc, char** argv) {
 
     // create bank of registers
     uint32_t regs[NUMREGS] = {0};
+    regs[9] = 2;
 
     // create program counter
     uint32_t pc = 0;
@@ -175,7 +209,7 @@ int main(int argc, char** argv) {
     while (true) {
         myMem->getMemValue(pc, instruction, WORD_SIZE);
         char code = getType(instruction);
-	uint32_t jAddress = createMask(0,26, instruction);
+	uint32_t jAddress = createMask(0,25, instruction);
 
 	// see which instruction type we retrieve
         switch (code) {
@@ -193,7 +227,7 @@ int main(int argc, char** argv) {
                 break;
             case R:
                 cout << "R" << endl;
-                pc += INSTR_SIZE;
+		rHelper(instruction, &pc, regs);
                 break;
             case J:
 	      {
