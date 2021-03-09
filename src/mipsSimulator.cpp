@@ -70,9 +70,6 @@ INSTR_TYPE getType(uint32_t instruction) {
 
 void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
-    
-    
-
     reg->at = regs[1];
 
 
@@ -116,23 +113,24 @@ int main(int argc, char** argv) {
 
 
     MemoryStore *myMem = createMemoryStore();
-    if(argv[1] == NULL){ 
+    if(argv[1] == NULL) { 
       cout << "No argument provided" << endl;
       exit(127);
-    }
+      }
     string fileName = argv[1];
-
-
 
     // create bank of registers
     uint32_t regs[NUMREGS] = {0};
 
+    // create program counter
+    uint32_t pc = 0;
 
+    // create variable to hold current instruction
+    uint32_t instruction;
 
+    // read binary file
     ifstream myFile(fileName.c_str(), ios::in | ios::binary);
 
-    
-    
     if (myFile.is_open()) {
 
         // get length of file:
@@ -158,17 +156,11 @@ int main(int argc, char** argv) {
 
 
     } else {
-        cout << "Could not read " + fileName;
+        cout << "Could not read\n " + fileName;
         return 0;
     }
 
-
-    uint32_t pc = 0;
-
-
-
-    uint32_t instruction;
-
+    // test contents of memory
     uint32_t val = 0;
     myMem->getMemValue(0x08, val, WORD_SIZE);
     cout << "The 32-bit (word) value of address 0x08 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
@@ -180,13 +172,13 @@ int main(int argc, char** argv) {
     cout << "The 32-bit (word) value of address 0x14 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
 
 
-
+    // main loop
     while (true) {
-        
         myMem->getMemValue(pc, instruction, WORD_SIZE);
         char code = getType(instruction);
 	uint32_t jAddress = createMask(0,26, instruction);
 
+	// see which instruction type we retrieve
         switch (code) {
             case Halt:
                 cout << "H" << endl;
