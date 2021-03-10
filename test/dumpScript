@@ -1,0 +1,3 @@
+#!/bin/bash
+#input is the name of the file without the .elf extension
+mips-linux-gnu-objdump -D -j .text $1.elf

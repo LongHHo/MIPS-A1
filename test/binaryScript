@@ -1,0 +1,4 @@
+#!/bin/bash
+#input is the name of the file without the .asm extension
+mips-linux-gnu-as $1.asm -o $1.elf
+mips-linux-gnu-objcopy $1.elf -j .text -O binary $1.bin
