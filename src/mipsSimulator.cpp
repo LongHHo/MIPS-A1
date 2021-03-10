@@ -168,6 +168,14 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 	*pc = *pc + 4;
 	break;
       }
+      // jr
+    case 0x08:
+      {
+	uint32_t rs = createMask(21,25,instruction);
+	*pc = regs[rs];
+
+	break;
+      }
         default:
 	  exit(127);
     }
@@ -189,8 +197,7 @@ int main(int argc, char** argv) {
 
     // create bank of registers
     uint32_t regs[NUMREGS] = {0};
-    regs[8] = 1;
-    regs[9] = 1;
+    regs[9] = 0x14;
 
     // create program counter
     uint32_t pc = 0;
