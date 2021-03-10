@@ -222,7 +222,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 	break;
       }
       // sltu
-      case 0x2a:
+      case 0x2b:
       {
 	uint32_t rd = createMask(11, 15, instruction);
 	uint32_t rt = createMask(16, 20, instruction);
@@ -236,6 +236,22 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 
 	break;
       }
+      // sll
+    case 0x00:
+      {
+	uint32_t rd = createMask(11, 15, instruction);
+	uint32_t rt = createMask(16, 20, instruction);
+	uint32_t shamt = createMask(6,10,instruction);
+
+	uint32_t op1 = regs[rt];
+	  
+        regs[rd] = op1<<shamt;
+	*pc = *pc + 4;
+
+	break;
+      }
+      
+      
 
       
         default:
@@ -259,8 +275,7 @@ int main(int argc, char** argv) {
 
     // create bank of registers
     uint32_t regs[NUMREGS] = {0};
-    regs[9] = 0x15;
-    regs[10] = 0x11;
+    regs[9] = 1;
 
     // create program counter
     uint32_t pc = 0;
