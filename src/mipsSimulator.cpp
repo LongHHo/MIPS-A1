@@ -250,6 +250,20 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 
 	break;
       }
+      // srl
+    case 0x02:
+      {
+	uint32_t rd = createMask(11, 15, instruction);
+	uint32_t rt = createMask(16, 20, instruction);
+	uint32_t shamt = createMask(6,10,instruction);
+
+	uint32_t op1 = regs[rt];
+	  
+        regs[rd] = op1>>shamt;
+	*pc = *pc + 4;
+
+	break;
+      }
       
       
 
