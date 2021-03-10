@@ -25,7 +25,7 @@ enum INSTR_TYPE
 uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 {
 
-  if (a > b) throw("Oh no");
+  if (a > b) throw("a must be less than b\n");
   
   uint32_t r = 0;
 
@@ -36,9 +36,7 @@ uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
     bMask = 0xFFFFFFFF;
   }
 
-
   r = bMask ^ aMask;
-
 
   return (instruction & r) >> a;
 
@@ -124,14 +122,13 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 
   cout << funct << " is the funct code" << endl;
 
-
     switch(funct){
+      // add signed
         case 0x20:
 	  {
 	  uint32_t rd = createMask(11, 15, instruction);
 	  uint32_t rt = createMask(16, 20, instruction);
 	  uint32_t rs = createMask(21, 25, instruction);
-	  cout << rt << endl;
 
 	  int op1 = regs[rs];
 	  int op2 = regs[rt];
@@ -141,6 +138,21 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 	  *pc = *pc + 4;
 	  break;
 	  }
+       // add unsigned
+       case 0x21:
+        {
+	uint32_t rd = createMask(11, 15, instruction);
+	uint32_t rt = createMask(16, 20, instruction);
+	uint32_t rs = createMask(21, 25, instruction);
+
+	uint32_t op1 = regs[rs];
+	uint32_t op2 = regs[rt];
+	  
+        regs[rd] = op1 + op2;
+	
+	*pc = *pc + 4;
+	break;
+      }
         default:
 	  exit(127);
     }
@@ -162,7 +174,8 @@ int main(int argc, char** argv) {
 
     // create bank of registers
     uint32_t regs[NUMREGS] = {0};
-    regs[9] = 2;
+    regs[9] = -2;
+    regs[10] = 1;
 
     // create program counter
     uint32_t pc = 0;
@@ -202,21 +215,6 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    // test contents of memory
-    uint32_t val = 0;
-    myMem->getMemValue(0x00, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x00 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
-    myMem->getMemValue(0x04, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x04 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
-    myMem->getMemValue(0x08, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x08 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
-    myMem->getMemValue(0x0c, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x0c is now 0x" << hex << setfill('0') << setw(8) << val << endl;
-    myMem->getMemValue(0x10, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x10 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
-    myMem->getMemValue(0x14, val, WORD_SIZE);
-    cout << "The 32-bit (word) value of address 0x14 is now 0x" << hex << setfill('0') << setw(8) << val << endl;
-
 
     // main loop
     while (true) {
@@ -227,7 +225,7 @@ int main(int argc, char** argv) {
 	// see which instruction type we retrieve
         switch (code) {
             case Halt:
-                cout << "H" << endl;
+                cout << "Halt" << endl;
                 RegisterInfo reg;
                 dumpRegisterContents(&reg, regs);
                 dumpRegisterState(reg); 
@@ -239,7 +237,7 @@ int main(int argc, char** argv) {
                 break;
             case R:
                 cout << "R" << endl;
-		        rHelper(instruction, &pc, regs);
+		rHelper(instruction, &pc, regs);
                 break;
             case J:
 	      {
