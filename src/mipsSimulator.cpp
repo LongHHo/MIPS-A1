@@ -191,6 +191,21 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 
 	break;
       }
+       // or
+    case 0x25:
+      {
+	uint32_t rd = createMask(11, 15, instruction);
+	uint32_t rt = createMask(16, 20, instruction);
+	uint32_t rs = createMask(21, 25, instruction);
+
+	uint32_t op1 = regs[rs];
+	uint32_t op2 = regs[rt];
+	  
+        regs[rd] = (op1 | op2);
+	*pc = *pc + 4;
+
+	break;
+      }
         default:
 	  exit(127);
     }
