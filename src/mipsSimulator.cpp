@@ -20,7 +20,7 @@ enum INSTR_TYPE
     J
 };
 
-// make own function later, from stack overflow
+
 // inclusive from a to b
 uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 {
@@ -42,6 +42,18 @@ uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 
 }
 
+
+int32_t signExtendedImm(uint32_t instruction) {
+
+    int32_t first16 = (0x0000FFFF & instruction);
+
+    // check if 16th bit is 1, if so sign extend
+    if (0x00008000 & first16) {
+        return (0xFFFF0000 + first16);
+    } else {
+        return first16;
+    }
+}
 
 INSTR_TYPE getType(uint32_t instruction) {
 
@@ -114,7 +126,82 @@ void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
 }
 
-void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
+
+void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
+
+    uint32_t rt = createMask(16, 20, instruction);
+    uint32_t rs = createMask(21, 25, instruction);
+
+    uint32_t opcode = instruction >> 26;
+
+
+    switch (opcode) {
+        // addi
+        case 0x08:
+        {
+            int32_t sourceNum = regs[rs]; 
+            int32_t imm = signExtendedImm(instruction);
+
+            int32_t result = sourceNum + imm;
+            
+            // check for overflow
+            if ((sourceNum > 0 && imm > 0 && result < 0) || (sourceNum < 0 && imm < 0 && result > 0)) {
+                RegisterInfo reg;
+                dumpRegisterContents(&reg, regs);
+                dumpRegisterState(reg); 
+                dumpMemoryState(myMem);
+                fprintf(stderr,"Arithmetic Overflow \n"); 
+                exit(12);
+            }
+
+            regs[rt] = result;
+            *pc = *pc + 4;
+            break;
+        }
+        // addiu
+        case 0x09:
+        {
+            uint32_t sourceNum = regs[rs]; 
+            int32_t imm = signExtendedImm(instruction);
+
+            regs[rt] = sourceNum + imm;
+            *pc = *pc + 4;
+            break;
+        }
+        // sw
+        case 0x2b:
+        {
+            uint32_t value = regs[rt];
+            uint32_t regAddr = regs[rs];
+            int32_t offset = signExtendedImm(instruction);
+            myMem->setMemValue((regAddr + offset), value, WORD_SIZE);
+            *pc = *pc + 4;
+            break;
+        }
+        case 0x23:
+        {
+            uint32_t regAddr = regs[rs];
+            int32_t offset = signExtendedImm(instruction);
+            myMem->getMemValue((regAddr + offset), regs[rt], WORD_SIZE);
+            *pc = *pc + 4;
+            break;
+        }
+        default:
+            fprintf(stderr,"Illegal operation..."); 
+            exit(127);
+    }
+
+
+
+
+
+
+}
+
+
+
+
+void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
 
     // get funct code
@@ -130,10 +217,29 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 	  uint32_t rt = createMask(16, 20, instruction);
 	  uint32_t rs = createMask(21, 25, instruction);
 
-	  int op1 = regs[rs];
-	  int op2 = regs[rt];
+	  int32_t op1 = regs[rs];
+	  int32_t op2 = regs[rt];
+
+
 	  
-	  regs[rd] = op1 + op2;
+	  int32_t result = op1 + op2;
+ 
+      cout << "Add op1 is " << op1 << endl;
+      cout << "And op2 is " << op2 << endl;
+
+      cout << "Result is" << result <<endl;
+
+
+      if ((op1 > 0 && op2 > 0 && result < 0) || (op1 < 0 && op2 < 0 && result > 0)) {
+        RegisterInfo reg;
+        dumpRegisterContents(&reg, regs);
+        dumpRegisterState(reg); 
+        dumpMemoryState(myMem);
+        fprintf(stderr,"Arithmetic Overflow \n"); 
+        exit(12);
+      }
+
+      regs[rd] = result;
 	 
 	  *pc = *pc + 4;
 	  break;
@@ -186,7 +292,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 	uint32_t op1 = regs[rs];
 	uint32_t op2 = regs[rt];
 	  
-        regs[rd] = ~(op1 | op2);
+    regs[rd] = ~(op1 | op2);
 	*pc = *pc + 4;
 
 	break;
@@ -271,35 +377,48 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs) {
 	  uint32_t rt = createMask(16, 20, instruction);
 	  uint32_t rs = createMask(21, 25, instruction);
 
-	  int op1 = regs[rs];
-	  int op2 = regs[rt];
+	  int32_t op1 = regs[rs];
+	  int32_t op2 = regs[rt];
+
+
+      int result = op1 - op2;
+
+        // check for overflow
+        if ((op1 < 0 && op2 > 0 && result > 0) || (op1 > 0 && op2 < 0 && result < 0)) {
+            RegisterInfo reg;
+            dumpRegisterContents(&reg, regs);
+            dumpRegisterState(reg); 
+            dumpMemoryState(myMem);
+            fprintf(stderr,"Arithmetic Overflow \n"); 
+            exit(12);
+            
+        }
+
 	  
-	  regs[rd] = op1 - op2;
+	  regs[rd] = result;
 	 
 	  *pc = *pc + 4;
 	  break;
 	  }
-       // sub unsigned
-       case 0x23:
+        // sub unsigned
+        case 0x23:
         {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
-	uint32_t rs = createMask(21, 25, instruction);
+        uint32_t rd = createMask(11, 15, instruction);
+        uint32_t rt = createMask(16, 20, instruction);
+        uint32_t rs = createMask(21, 25, instruction);
 
-	uint32_t op1 = regs[rs];
-	uint32_t op2 = regs[rt];
-	  
+        uint32_t op1 = regs[rs];
+        uint32_t op2 = regs[rt];
+        
+        
         regs[rd] = op1 - op2;
-	
-	*pc = *pc + 4;
-	break;
-      }
-      
-      
-
-      
-        default:
-	  exit(127);
+        
+        *pc = *pc + 4;
+        break;
+      }      
+    default:
+        fprintf(stderr,"Illegal operation..."); 
+        exit(127);
     }
 
 }
@@ -319,8 +438,10 @@ int main(int argc, char** argv) {
 
     // create bank of registers
     uint32_t regs[NUMREGS] = {0};
-    regs[8] = -1;
-    regs[9] = -1;
+    // regs[8] = 0b01111111111111111111111111111111;
+    // regs[9] = 0b01111111111111111111111111111111;
+    // regs[8] = 4;
+    // regs[9] = 5;
 
     // create program counter
     uint32_t pc = 0;
@@ -365,7 +486,7 @@ int main(int argc, char** argv) {
     while (true) {
         myMem->getMemValue(pc, instruction, WORD_SIZE);
         char code = getType(instruction);
-	uint32_t jAddress = createMask(0,25, instruction);
+	    uint32_t jAddress = createMask(0,25, instruction);
 
 	// see which instruction type we retrieve
         switch (code) {
@@ -382,7 +503,7 @@ int main(int argc, char** argv) {
                 break;
             case R:
                 cout << "R" << endl;
-		rHelper(instruction, &pc, regs);
+		        rHelper(instruction, &pc, regs, myMem);
                 break;
             case J:
 	      {
@@ -398,7 +519,7 @@ int main(int argc, char** argv) {
 	      }
             case I:
                 cout << "I" << endl;
-                pc += INSTR_SIZE;
+                iHelper(instruction, &pc, regs, myMem);
                 break;
             default:
                 fprintf(stderr,"Illegal operation..."); 
