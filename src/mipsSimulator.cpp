@@ -153,9 +153,7 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
                 fprintf(stderr,"Arithmetic Overflow \n"); 
                 exit(12);
             }
-
             regs[rt] = result;
-            *pc = *pc + 4;
             break;
         }
         // addiu
@@ -165,7 +163,24 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             int32_t imm = signExtendedImm(instruction);
 
             regs[rt] = sourceNum + imm;
-            *pc = *pc + 4;
+            break;
+        }
+        // andi
+        case 0x0c:
+        {
+            uint32_t num = regs[rs];
+            // zero extended immediate 
+            uint32_t immediate = (0x0000FFFF & instruction);
+            regs[rt] = num & immediate;
+            break;
+        }
+        // ori
+        case 0x0d:
+        {
+            uint32_t num = regs[rs];
+            // zero extended immediate 
+            uint32_t immediate = (0x0000FFFF & instruction);
+            regs[rt] = num | immediate;
             break;
         }
         // sw
@@ -175,15 +190,30 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->setMemValue((regAddr + offset), value, WORD_SIZE);
-            *pc = *pc + 4;
             break;
         }
+        // lw
         case 0x23:
         {
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->getMemValue((regAddr + offset), regs[rt], WORD_SIZE);
-            *pc = *pc + 4;
+            break;
+        }
+        // beq
+        case 0x04:
+        {
+            if (regs[rt] == regs[rs]) {
+                *pc = *pc + (signExtendedImm(instruction) << 2);
+            } 
+            break;
+        }
+        // bne
+        case 0x05:
+        {
+            if (regs[rt] != regs[rs]) {
+                *pc = *pc + (signExtendedImm(instruction) << 2);
+            } 
             break;
         }
         default:
@@ -191,11 +221,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             exit(127);
     }
 
-
-
-
-
-
+    // go to next instruction
+    *pc = *pc + 4;
 }
 
 
@@ -511,7 +538,7 @@ int main(int argc, char** argv) {
                 if (createMask(26,31,instruction) == 3) {
                     cout << "Jump and link" << endl;
                             regs[31] = pc + 8;
-                        }
+                }
                 jAddress = jAddress << 2;
                 uint32_t pcAddr = pc & ~0xFFFFFFF;
                 pc = pcAddr | jAddress;
