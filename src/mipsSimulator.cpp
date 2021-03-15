@@ -216,6 +216,32 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             } 
             break;
         }
+
+        // everything below here in i instructions needs some testing
+        // slti
+        case 0x0a:
+        {
+            int32_t immediate = signExtendedImm(instruction);
+            int32_t num = regs[rs];
+            regs[rt] = (num < immediate) ? 1 : 0;
+            break;
+        }
+        // sltiu
+        case 0x0b:
+        {
+            uint32_t immediate = signExtendedImm(instruction);
+            uint32_t num = regs[rs];
+            regs[rt] = (num < immediate) ? 1 : 0;
+            break;
+        }
+        // lui
+        case 0x0f:
+        {   
+            uint32_t immediate = (0x0000FFFF & instruction);
+            immediate = (immediate << 16);
+            regs[rt] = immediate;
+            break;
+        }
         default:
             fprintf(stderr,"Illegal operation..."); 
             exit(127);
