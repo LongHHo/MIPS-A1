@@ -240,7 +240,6 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             regs[rt] = immediate;
             break;
         }
-        // more testing needed from here to end of i helper
         // lbu
         case 0x24:
         {
@@ -266,12 +265,29 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             myMem->setMemValue((regAddr + offset), value, BYTE_SIZE);
             break;
         }
+        // sh
         case 0x29:
         {
             uint32_t value = createMask(0, 15, regs[rt]);
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->setMemValue((regAddr + offset), value, HALF_SIZE);
+            break;
+        }
+        // bgtz
+        case 0x07:
+        {
+            if (regs[rs] > 0) {
+                *pc = *pc + (signExtendedImm(instruction) << 2);
+            } 
+            break;
+        }
+        // blez
+        case 0x06:
+        {
+            if (regs[rs] <= 0) {
+                *pc = *pc + (signExtendedImm(instruction) << 2);
+            } 
             break;
         }
         default:
