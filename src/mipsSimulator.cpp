@@ -216,8 +216,6 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             } 
             break;
         }
-
-        // everything below here in i instructions needs some testing
         // slti
         case 0x0a:
         {
@@ -240,6 +238,40 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t immediate = (0x0000FFFF & instruction);
             immediate = (immediate << 16);
             regs[rt] = immediate;
+            break;
+        }
+        // more testing needed from here to end of i helper
+        // lbu
+        case 0x24:
+        {
+            uint32_t regAddr = regs[rs];
+            int32_t offset = signExtendedImm(instruction);
+            myMem->getMemValue((regAddr + offset), regs[rt], BYTE_SIZE);
+            break;
+        }
+        // lhu
+        case 0x25:
+        {
+            uint32_t regAddr = regs[rs];
+            int32_t offset = signExtendedImm(instruction);
+            myMem->getMemValue((regAddr + offset), regs[rt], HALF_SIZE);
+            break;
+        }
+        // sb
+        case 0x28:
+        {
+            uint32_t value = createMask(0, 7, regs[rt]);
+            uint32_t regAddr = regs[rs];
+            int32_t offset = signExtendedImm(instruction);
+            myMem->setMemValue((regAddr + offset), value, BYTE_SIZE);
+            break;
+        }
+        case 0x29:
+        {
+            uint32_t value = createMask(0, 15, regs[rt]);
+            uint32_t regAddr = regs[rs];
+            int32_t offset = signExtendedImm(instruction);
+            myMem->setMemValue((regAddr + offset), value, HALF_SIZE);
             break;
         }
         default:
