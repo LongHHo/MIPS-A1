@@ -160,6 +160,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
                 exit(12);
             }
             regs[rt] = result;
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // addiu
@@ -169,6 +171,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             int32_t imm = signExtendedImm(instruction);
 
             regs[rt] = sourceNum + imm;
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // andi
@@ -178,6 +182,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             // zero extended immediate 
             uint32_t immediate = (0x0000FFFF & instruction);
             regs[rt] = num & immediate;
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // ori
@@ -187,6 +193,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             // zero extended immediate 
             uint32_t immediate = (0x0000FFFF & instruction);
             regs[rt] = num | immediate;
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // sw
@@ -196,6 +204,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->setMemValue((regAddr + offset), value, WORD_SIZE);
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // lw
@@ -204,23 +214,28 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->getMemValue((regAddr + offset), regs[rt], WORD_SIZE);
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // beq
         case 0x04:
-        {
+        {   
+            // go to next instruction
+            *pc = *pc + 4;
             if (regs[rt] == regs[rs]) {
-                uint32_t tempPc = *pc;
-                *pc = *pc + 4;
                 executeInstruction(pc, regs, myMem);
-                *pc = tempPc + (signExtendedImm(instruction) << 2);
+                *pc = *pc + (signExtendedImm(instruction) << 2);
             } 
             break;
         }
         // bne
         case 0x05:
-        {
+        {   
+            // go to next instruction
+            *pc = *pc + 4;
             if (regs[rt] != regs[rs]) {
+                executeInstruction(pc, regs, myMem);
                 *pc = *pc + (signExtendedImm(instruction) << 2);
             } 
             break;
@@ -231,6 +246,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             int32_t immediate = signExtendedImm(instruction);
             int32_t num = regs[rs];
             regs[rt] = (num < immediate) ? 1 : 0;
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // sltiu
@@ -239,6 +256,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t immediate = signExtendedImm(instruction);
             uint32_t num = regs[rs];
             regs[rt] = (num < immediate) ? 1 : 0;
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // lui
@@ -247,6 +266,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t immediate = (0x0000FFFF & instruction);
             immediate = (immediate << 16);
             regs[rt] = immediate;
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // lbu
@@ -255,6 +276,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->getMemValue((regAddr + offset), regs[rt], BYTE_SIZE);
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // lhu
@@ -263,6 +286,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->getMemValue((regAddr + offset), regs[rt], HALF_SIZE);
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // sb
@@ -272,6 +297,8 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->setMemValue((regAddr + offset), value, BYTE_SIZE);
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // sh
@@ -281,22 +308,30 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             uint32_t regAddr = regs[rs];
             int32_t offset = signExtendedImm(instruction);
             myMem->setMemValue((regAddr + offset), value, HALF_SIZE);
+            // go to next instruction
+            *pc = *pc + 4;
             break;
         }
         // bgtz
         case 0x07:
-        {
+        {   
+            // go to next instruction
+            *pc = *pc + 4;
             if (regs[rs] > 0) {
+                executeInstruction(pc, regs, myMem);
                 *pc = *pc + (signExtendedImm(instruction) << 2);
             } 
             break;
         }
         // blez
         case 0x06:
-        {
+        {   
+            // go to next instruction
+            *pc = *pc + 4;  
             if (regs[rs] <= 0) {
+                executeInstruction(pc, regs, myMem);
                 *pc = *pc + (signExtendedImm(instruction) << 2);
-            } 
+            }           
             break;
         }
         default:
@@ -304,8 +339,6 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             exit(127);
     }
 
-    // go to next instruction
-    *pc = *pc + 4;
 }
 
 
@@ -543,6 +576,8 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
         char code = getType(instruction);
 	    uint32_t jAddress = createMask(0,25, instruction);
 
+        cout << hex << setfill('0') << setw(8) << instruction << endl;
+
 	    // see which instruction type we retrieve
         switch (code) {
             case Halt:
@@ -581,8 +616,8 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
                 exit(127);
         }
 
-    return 0;
 
+    return 0;
 }
 
 
