@@ -24,7 +24,7 @@ enum INSTR_TYPE
 };
 
 
-// inclusive from a to b
+// Extract bits from word inclusive from bit a to b
 uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 {
 
@@ -45,7 +45,7 @@ uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 
 }
 
-
+// Sign extend bits 15-31 with the 15th bit of the instruction
 int32_t signExtendedImm(uint32_t instruction) {
 
     int32_t first16 = (0x0000FFFF & instruction);
@@ -58,6 +58,7 @@ int32_t signExtendedImm(uint32_t instruction) {
     }
 }
 
+// Given an instruction, returns the instruction type
 INSTR_TYPE getType(uint32_t instruction) {
 
     if (instruction == 0xfeedfeed) {
@@ -88,7 +89,7 @@ INSTR_TYPE getType(uint32_t instruction) {
 
 }
 
-
+// Dumps contents in array regs into RegisterInfo rerg
 void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
     reg->at = regs[1];
@@ -129,7 +130,7 @@ void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
 }
 
-
+// Helper function to decode and execute the I type instruction
 void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
     uint32_t rt = createMask(16, 20, instruction);
@@ -304,9 +305,7 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
     *pc = *pc + 4;
 }
 
-
-
-
+// Helper function to decode and execute the R type instruction
 void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
    uint32_t rd = createMask(11, 15, instruction);
@@ -490,7 +489,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 
 }
 
-
+// Decode instruction at pc and execute it
 int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
         // create variable to hold current instruction
@@ -542,9 +541,6 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
 }
 
-
-
-
 int main(int argc, char** argv) {   
 
 
@@ -557,10 +553,6 @@ int main(int argc, char** argv) {
 
     // create bank of registers
     uint32_t regs[NUMREGS] = {0};
-    // regs[8] = 0b01111111111111111111111111111111;
-    // regs[9] = 0b01111111111111111111111111111111;
-    // regs[8] = 4;
-    // regs[9] = 5;
 
     // create program counter
     uint32_t pc = 0;
@@ -605,10 +597,6 @@ int main(int argc, char** argv) {
             return 0;
         }
     }
-
-
-
-
 
 
     return 0;
