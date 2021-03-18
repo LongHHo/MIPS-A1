@@ -11,9 +11,6 @@ using namespace std;
 // function declaration to execute an instruction
 int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem);
 
-
-
-
 const uint32_t NUMREGS = 32;
 const uint32_t INSTR_SIZE = 4;
 
@@ -139,7 +136,6 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
     uint32_t rs = createMask(21, 25, instruction);
 
     uint32_t opcode = instruction >> 26;
-
 
     switch (opcode) {
         // addi
@@ -313,6 +309,10 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 
 void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
+   uint32_t rd = createMask(11, 15, instruction);
+   uint32_t rt = createMask(16, 20, instruction);
+   uint32_t rs = createMask(21, 25, instruction);
+
 
     // get funct code
   uint32_t funct = createMask(0, 5, instruction);
@@ -323,15 +323,9 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // add signed
         case 0x20:
 	  {
-	  uint32_t rd = createMask(11, 15, instruction);
-	  uint32_t rt = createMask(16, 20, instruction);
-	  uint32_t rs = createMask(21, 25, instruction);
-
 	  int32_t op1 = regs[rs];
 	  int32_t op2 = regs[rt];
 
-
-	  
 	  int32_t result = op1 + op2;
  
       cout << "Add op1 is " << op1 << endl;
@@ -357,10 +351,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
        // add unsigned
        case 0x21:
         {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
-	uint32_t rs = createMask(21, 25, instruction);
-
 	uint32_t op1 = regs[rs];
 	uint32_t op2 = regs[rt];
 	  
@@ -372,10 +362,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // and
     case 0x24:
       {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
-	uint32_t rs = createMask(21, 25, instruction);
-
 	uint32_t op1 = regs[rs];
 	uint32_t op2 = regs[rt];
 	  
@@ -387,7 +373,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // jr
     case 0x08:
       {
-	uint32_t rs = createMask(21,25,instruction);
 	*pc = regs[rs];
 
 	break;
@@ -395,10 +380,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // nor
     case 0x27:
       {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
-	uint32_t rs = createMask(21, 25, instruction);
-
 	uint32_t op1 = regs[rs];
 	uint32_t op2 = regs[rt];
 	  
@@ -410,10 +391,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
        // or
     case 0x25:
       {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
-	uint32_t rs = createMask(21, 25, instruction);
-
 	uint32_t op1 = regs[rs];
 	uint32_t op2 = regs[rt];
 	  
@@ -425,10 +402,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // slt
       case 0x2a:
       {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
-	uint32_t rs = createMask(21, 25, instruction);
-
 	int32_t op1 = regs[rs];
 	int32_t op2 = regs[rt];
 	  
@@ -440,10 +413,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // sltu
       case 0x2b:
       {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
-	uint32_t rs = createMask(21, 25, instruction);
-
 	uint32_t op1 = regs[rs];
 	uint32_t op2 = regs[rt];
 	  
@@ -455,8 +424,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // sll
     case 0x00:
       {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
 	uint32_t shamt = createMask(6,10,instruction);
 
 	uint32_t op1 = regs[rt];
@@ -469,8 +436,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // srl
     case 0x02:
       {
-	uint32_t rd = createMask(11, 15, instruction);
-	uint32_t rt = createMask(16, 20, instruction);
 	uint32_t shamt = createMask(6,10,instruction);
 
 	uint32_t op1 = regs[rt];
@@ -483,10 +448,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // sub signed
         case 0x22:
 	  {
-	  uint32_t rd = createMask(11, 15, instruction);
-	  uint32_t rt = createMask(16, 20, instruction);
-	  uint32_t rs = createMask(21, 25, instruction);
-
 	  int32_t op1 = regs[rs];
 	  int32_t op2 = regs[rt];
 
@@ -513,10 +474,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         // sub unsigned
         case 0x23:
         {
-        uint32_t rd = createMask(11, 15, instruction);
-        uint32_t rt = createMask(16, 20, instruction);
-        uint32_t rs = createMask(21, 25, instruction);
-
         uint32_t op1 = regs[rs];
         uint32_t op2 = regs[rt];
         
@@ -580,7 +537,7 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
                 fprintf(stderr,"Illegal operation..."); 
                 exit(127);
         }
-
+	regs[0] = 0;
     return 0;
 
 }
