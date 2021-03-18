@@ -220,7 +220,10 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         case 0x05:
         {
             if (regs[rt] != regs[rs]) {
-                *pc = *pc + (signExtendedImm(instruction) << 2);
+                uint32_t tempPc = *pc;
+                *pc = *pc + 4;
+                executeInstruction(pc, regs, myMem);
+                *pc = tempPc + (signExtendedImm(instruction) << 2);
             } 
             break;
         }
@@ -284,17 +287,24 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         }
         // bgtz
         case 0x07:
-        {
-            if (regs[rs] > 0) {
-                *pc = *pc + (signExtendedImm(instruction) << 2);
+        {   
+            int32_t num = regs[rs];
+            if (num > 0) {
+                uint32_t tempPc = *pc;
+                *pc = *pc + 4;
+                executeInstruction(pc, regs, myMem);
+                *pc = tempPc + (signExtendedImm(instruction) << 2);
             } 
             break;
         }
         // blez
         case 0x06:
-        {
-            if (regs[rs] <= 0) {
-                *pc = *pc + (signExtendedImm(instruction) << 2);
+        {   int32_t num = regs[rs];
+            if (num <= 0) {
+                uint32_t tempPc = *pc;
+                *pc = *pc + 4;
+                executeInstruction(pc, regs, myMem);
+                *pc = tempPc + (signExtendedImm(instruction) << 2);
             } 
             break;
         }
@@ -302,7 +312,6 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             fprintf(stderr,"Illegal operation..."); 
             exit(127);
     }
-
     // go to next instruction
     *pc = *pc + 4;
 }
@@ -328,11 +337,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	  int32_t op2 = regs[rt];
 
 	  int32_t result = op1 + op2;
- 
-      cout << "Add op1 is " << op1 << endl;
-      cout << "And op2 is " << op2 << endl;
-
-      cout << "Result is" << result <<endl;
 
 
       if ((op1 > 0 && op2 > 0 && result < 0) || (op1 < 0 && op2 < 0 && result > 0)) {
@@ -374,8 +378,9 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
       // jr
     case 0x08:
       {
+    *pc = *pc + 4;
+    executeInstruction(pc, regs, myMem);
 	*pc = regs[rs];
-
 	break;
       }
       // nor
@@ -480,7 +485,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         
         
         regs[rd] = op1 - op2;
-        
         *pc = *pc + 4;
         break;
       }      
@@ -521,9 +525,12 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
             case J:
 	      {
                 cout << "J" << endl;
+                
+                uint32_t tempPc = *pc;
+                *pc = *pc + 4;
+                executeInstruction(pc, regs, myMem);
                 if (createMask(26,31,instruction) == 3) {
-                    cout << "Jump and link" << endl;
-                            regs[31] = *pc + 8;
+                    regs[31] = tempPc + 8;
                 }
                 jAddress = jAddress << 2;
                 uint32_t pcAddr = *pc & ~0xFFFFFFF;
@@ -538,6 +545,8 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
                 fprintf(stderr,"Illegal operation..."); 
                 exit(127);
         }
+
+    // ensure zero register doesn't change
 	regs[0] = 0;
     return 0;
 
