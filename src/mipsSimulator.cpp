@@ -15,6 +15,7 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem);
 const uint32_t NUMREGS = 32;
 const uint32_t INSTR_SIZE = 4;
 
+// Custom data type for instructions encountered in simulator
 enum INSTR_TYPE
 {  
     Halt, 
