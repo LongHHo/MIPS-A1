@@ -26,7 +26,7 @@ enum INSTR_TYPE
 };
 
 
-// Extract bits from word inclusive from bit a to b
+// Extract bits from word instruction inclusive from bit a to b
 uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 {
 
@@ -60,7 +60,7 @@ int32_t signExtendedImm(uint32_t instruction) {
     }
 }
 
-// Given an instruction, returns the instruction type
+// Given an instruction, returns the INSTR_TYPE of that instruction
 INSTR_TYPE getType(uint32_t instruction) {
 
     if (instruction == 0xfeedfeed) {
@@ -91,7 +91,7 @@ INSTR_TYPE getType(uint32_t instruction) {
 
 }
 
-// Dumps contents in array regs into RegisterInfo rerg
+// Dumps contents in array regs into RegisterInfo reg
 void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
     reg->at = regs[1];
@@ -132,7 +132,8 @@ void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
 }
 
-// Helper function to decode and execute the I type instruction
+// Helper function to decode and execute the I type instruction,
+// modifying and readin pc, MemoryStore myMem,and register array regs as necessary
 void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
     uint32_t rt = createMask(16, 20, instruction);
@@ -208,9 +209,10 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         // beq
         case 0x04:
         {
+            // if branch is taken, execute next instruction first and then jump pc
             if (regs[rt] == regs[rs]) {
                 uint32_t tempPc = *pc;
-                *pc = *pc + 4;
+                *pc = *pc + INSTR_SIZE;
                 executeInstruction(pc, regs, myMem);
                 *pc = tempPc + (signExtendedImm(instruction) << 2);
             } 
@@ -218,10 +220,11 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         }
         // bne
         case 0x05:
-        {
+        {   
+            // if branch is taken, execute next instruction first and then jump pc
             if (regs[rt] != regs[rs]) {
                 uint32_t tempPc = *pc;
-                *pc = *pc + 4;
+                *pc = *pc + INSTR_SIZE;
                 executeInstruction(pc, regs, myMem);
                 *pc = tempPc + (signExtendedImm(instruction) << 2);
             } 
@@ -288,10 +291,11 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         // bgtz
         case 0x07:
         {   
+            // if branch is taken, execute next instruction first and then jump pc
             int32_t num = regs[rs];
             if (num > 0) {
                 uint32_t tempPc = *pc;
-                *pc = *pc + 4;
+                *pc = *pc + INSTR_SIZE;
                 executeInstruction(pc, regs, myMem);
                 *pc = tempPc + (signExtendedImm(instruction) << 2);
             } 
@@ -300,9 +304,10 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         // blez
         case 0x06:
         {   int32_t num = regs[rs];
+            // if branch is taken, execute next instruction first and then jump pc
             if (num <= 0) {
                 uint32_t tempPc = *pc;
-                *pc = *pc + 4;
+                *pc = *pc + INSTR_SIZE;
                 executeInstruction(pc, regs, myMem);
                 *pc = tempPc + (signExtendedImm(instruction) << 2);
             } 
@@ -310,13 +315,18 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         }
         default:
             fprintf(stderr,"Illegal operation..."); 
+            RegisterInfo reg;
+            dumpRegisterContents(&reg, regs);
+            dumpRegisterState(reg); 
+            dumpMemoryState(myMem);
             exit(127);
     }
     // go to next instruction
-    *pc = *pc + 4;
+    *pc = *pc + INSTR_SIZE;
 }
 
 // Helper function to decode and execute the R type instruction
+// modifying and readin pc, MemoryStore myMem,and register array regs as necessary
 void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
    uint32_t rd = createMask(11, 15, instruction);
@@ -327,7 +337,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
     // get funct code
   uint32_t funct = createMask(0, 5, instruction);
 
-  cout << funct << " is the funct code" << endl;
 
     switch(funct){
       // add signed
@@ -338,7 +347,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 
 	  int32_t result = op1 + op2;
 
-
+      // check for overflow
       if ((op1 > 0 && op2 > 0 && result < 0) || (op1 < 0 && op2 < 0 && result > 0)) {
         RegisterInfo reg;
         dumpRegisterContents(&reg, regs);
@@ -350,7 +359,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 
       regs[rd] = result;
 	 
-	  *pc = *pc + 4;
+	  *pc = *pc + INSTR_SIZE;
 	  break;
 	  }
        // add unsigned
@@ -361,7 +370,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	  
         regs[rd] = op1 + op2;
 	
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 	break;
       }
       // and
@@ -372,13 +381,14 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	  
         regs[rd] = op1 & op2;
 	
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 	break;
       }
       // jr
     case 0x08:
       {
-    *pc = *pc + 4;
+    // execute branch delay slot before jumping
+    *pc = *pc + INSTR_SIZE;
     executeInstruction(pc, regs, myMem);
 	*pc = regs[rs];
 	break;
@@ -390,7 +400,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	uint32_t op2 = regs[rt];
 	  
     regs[rd] = ~(op1 | op2);
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 
 	break;
       }
@@ -401,7 +411,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	uint32_t op2 = regs[rt];
 	  
         regs[rd] = (op1 | op2);
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 
 	break;
       }
@@ -412,7 +422,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	int32_t op2 = regs[rt];
 	  
         regs[rd] = (op1<op2)?1:0;
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 
 	break;
       }
@@ -423,7 +433,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	uint32_t op2 = regs[rt];
 	  
         regs[rd] = (op1<op2)?1:0;
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 
 	break;
       }
@@ -435,7 +445,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	uint32_t op1 = regs[rt];
 	  
         regs[rd] = op1<<shamt;
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 
 	break;
       }
@@ -447,7 +457,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	uint32_t op1 = regs[rt];
 	  
         regs[rd] = op1>>shamt;
-	*pc = *pc + 4;
+	*pc = *pc + INSTR_SIZE;
 
 	break;
       }
@@ -458,7 +468,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	  int32_t op2 = regs[rt];
 
 
-      int result = op1 - op2;
+      int32_t result = op1 - op2;
 
         // check for overflow
         if ((op1 < 0 && op2 > 0 && result > 0) || (op1 > 0 && op2 < 0 && result < 0)) {
@@ -474,7 +484,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	  
 	  regs[rd] = result;
 	 
-	  *pc = *pc + 4;
+	  *pc = *pc + INSTR_SIZE;
 	  break;
 	  }
         // sub unsigned
@@ -485,17 +495,23 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         
         
         regs[rd] = op1 - op2;
-        *pc = *pc + 4;
+        *pc = *pc + INSTR_SIZE;
         break;
       }      
     default:
         fprintf(stderr,"Illegal operation..."); 
+        RegisterInfo reg;
+        dumpRegisterContents(&reg, regs);
+        dumpRegisterState(reg); 
+        dumpMemoryState(myMem);
         exit(127);
     }
 
 }
 
 // Decode instruction at pc and execute it
+// Returns 1 if encounters halt instruction
+// Returns 0 otherwise
 int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
         // create variable to hold current instruction
@@ -508,12 +524,13 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 	    // see which instruction type we retrieve
         switch (code) {
             case Halt:
-                cout << "Halt" << endl;
+                {cout << "Halt" << endl;
                 RegisterInfo reg;
                 dumpRegisterContents(&reg, regs);
                 dumpRegisterState(reg); 
                 dumpMemoryState(myMem);
                 return 1;
+                }
             case Pad:
                 cout << "Pad" << endl;
                 *pc += INSTR_SIZE;
@@ -523,14 +540,13 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 		        rHelper(instruction, pc, regs, myMem);
                 break;
             case J:
-	      {
+	      {       
                 cout << "J" << endl;
-                
                 uint32_t tempPc = *pc;
-                *pc = *pc + 4;
+                *pc = *pc + INSTR_SIZE;
                 executeInstruction(pc, regs, myMem);
                 if (createMask(26,31,instruction) == 3) {
-                    regs[31] = tempPc + 8;
+                    regs[31] = tempPc + (2*INSTR_SIZE);
                 }
                 jAddress = jAddress << 2;
                 uint32_t pcAddr = *pc & ~0xFFFFFFF;
@@ -542,11 +558,15 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
                 iHelper(instruction, pc, regs, myMem);
                 break;
             default:
-                fprintf(stderr,"Illegal operation..."); 
+                {fprintf(stderr,"Illegal operation..."); 
+                RegisterInfo reg;
+                dumpRegisterContents(&reg, regs);
+                dumpRegisterState(reg); 
+                dumpMemoryState(myMem);
                 exit(127);
+                }
         }
-
-    // ensure zero register doesn't change
+    // ensure zero register stays zero
 	regs[0] = 0;
     return 0;
 
@@ -604,6 +624,7 @@ int main(int argc, char** argv) {
 
     // main loop
     while (true) {
+        // continue executing instructions until Halt
         if (executeInstruction(&pc, regs, myMem)) {
             return 0;
         }
