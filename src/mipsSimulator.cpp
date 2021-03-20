@@ -26,7 +26,7 @@ enum INSTR_TYPE
 };
 
 
-// Extract bits from word instruction inclusive from bit a to b
+// Return bits from word instruction inclusive from bit a to b
 uint32_t createMask(uint8_t a, uint8_t b, uint32_t instruction)
 {
 
@@ -73,7 +73,6 @@ INSTR_TYPE getType(uint32_t instruction) {
     
     uint32_t opcode = instruction >> 26;
 
-
     switch(opcode) {
         case 0:
             return R;
@@ -96,23 +95,19 @@ void dumpRegisterContents(RegisterInfo *reg, uint32_t* regs) {
 
     reg->at = regs[1];
 
-
     for (uint32_t i = 0; i < V_REG_SIZE; i++) {
         reg->v[i] = regs[2 + i];
     }
 
-
     for (uint32_t i = 0; i < A_REG_SIZE; i++) {
         reg->a[i] = regs[4 + i];
     }
-
 
     for (uint32_t i = 0; i < T_REG_SIZE - 2; i++) {
         reg->t[i] = regs[8 + i];
     }
     reg->t[8] = regs[24];
     reg->t[9] = regs[25];
-
 
     for (uint32_t i = 0; i < S_REG_SIZE; i++) {
         reg->s[i] = regs[16 + i];
@@ -333,10 +328,8 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
    uint32_t rt = createMask(16, 20, instruction);
    uint32_t rs = createMask(21, 25, instruction);
 
-
     // get funct code
   uint32_t funct = createMask(0, 5, instruction);
-
 
     switch(funct){
       // add signed
@@ -467,8 +460,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
 	  int32_t op1 = regs[rs];
 	  int32_t op2 = regs[rt];
 
-
-      int32_t result = op1 - op2;
+	  int32_t result = op1 - op2;
 
         // check for overflow
         if ((op1 < 0 && op2 > 0 && result > 0) || (op1 > 0 && op2 < 0 && result < 0)) {
@@ -480,8 +472,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             exit(12);
             
         }
-
-	  
 	  regs[rd] = result;
 	 
 	  *pc = *pc + INSTR_SIZE;
@@ -492,7 +482,6 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         {
         uint32_t op1 = regs[rs];
         uint32_t op2 = regs[rt];
-        
         
         regs[rd] = op1 - op2;
         *pc = *pc + INSTR_SIZE;
@@ -519,12 +508,12 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
         myMem->getMemValue(*pc, instruction, WORD_SIZE);
         char code = getType(instruction);
-	    uint32_t jAddress = createMask(0,25, instruction);
+	uint32_t jAddress = createMask(0,25, instruction);
 
 	    // see which instruction type we retrieve
         switch (code) {
             case Halt:
-                {cout << "Halt" << endl;
+                {
                 RegisterInfo reg;
                 dumpRegisterContents(&reg, regs);
                 dumpRegisterState(reg); 
@@ -532,16 +521,13 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
                 return 1;
                 }
             case Pad:
-                cout << "Pad" << endl;
                 *pc += INSTR_SIZE;
                 break;
             case R:
-                cout << "R" << endl;
-		        rHelper(instruction, pc, regs, myMem);
+	        rHelper(instruction, pc, regs, myMem);
                 break;
             case J:
 	      {       
-                cout << "J" << endl;
                 uint32_t tempPc = *pc;
                 *pc = *pc + INSTR_SIZE;
                 executeInstruction(pc, regs, myMem);
@@ -554,7 +540,6 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
                 break;
 	      }
             case I:
-                cout << "I" << endl;
                 iHelper(instruction, pc, regs, myMem);
                 break;
             default:
@@ -574,7 +559,6 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
 
 int main(int argc, char** argv) {   
 
-
     MemoryStore *myMem = createMemoryStore();
     if(argv[1] == NULL) { 
       cout << "No argument provided" << endl;
@@ -587,7 +571,6 @@ int main(int argc, char** argv) {
 
     // create program counter
     uint32_t pc = 0;
-
 
     // read binary file
     ifstream myFile(fileName.c_str(), ios::in | ios::binary);
@@ -615,7 +598,6 @@ int main(int argc, char** argv) {
 
         myFile.close();
 
-
     } else {
         cout << "Could not read\n " + fileName;
         return 0;
@@ -629,7 +611,6 @@ int main(int argc, char** argv) {
             return 0;
         }
     }
-
 
     return 0;
 }
