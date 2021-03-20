@@ -309,7 +309,7 @@ void iHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
             break;
         }
         default:
-            fprintf(stderr,"Illegal operation..."); 
+            fprintf(stderr,"Illegal operation...\n"); 
             RegisterInfo reg;
             dumpRegisterContents(&reg, regs);
             dumpRegisterState(reg); 
@@ -488,7 +488,7 @@ void rHelper(uint32_t instruction, uint32_t* pc, uint32_t* regs, MemoryStore *my
         break;
       }      
     default:
-        fprintf(stderr,"Illegal operation..."); 
+        fprintf(stderr,"Illegal operation...\n"); 
         RegisterInfo reg;
         dumpRegisterContents(&reg, regs);
         dumpRegisterState(reg); 
@@ -543,7 +543,7 @@ int executeInstruction(uint32_t* pc, uint32_t* regs, MemoryStore *myMem) {
                 iHelper(instruction, pc, regs, myMem);
                 break;
             default:
-                {fprintf(stderr,"Illegal operation..."); 
+                {fprintf(stderr,"Illegal operation...\n"); 
                 RegisterInfo reg;
                 dumpRegisterContents(&reg, regs);
                 dumpRegisterState(reg); 
